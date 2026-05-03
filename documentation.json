@@ -1,0 +1,5 @@
+{
+    "If": {
+        "usage": "# If\n\nUses a boolean condition to choose between the **Then** and **Else** execution paths.\n\n## Usage\n\n1. Trigger the chip through the `Run` execution input.\n2. Provide a boolean value to `Condition`.\n3. Use `Then` for the true branch.\n4. Use `Else` for the false branch.\n\n## Rules\n\n- `Condition` should resolve to a boolean before the chip runs.\n- `Then` and `Else` are execution outputs and do not return a value payload.\n- The chip should only branch from its expected execution input.\n\n## Errors\n\n- `{error.invalid}` when the condition cannot be used as a boolean.\n- `{error.internal_exception}` when an unexpected internal failure prevents execution.\n\n## Example\n\n`If(A1)`"
+    }
+}

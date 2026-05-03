@@ -244,3 +244,69 @@ Avoid these issues:
 7. Letting the chip name, function name, and behavior drift apart.
 
 If you keep the contract, variables, versioning, and execution flow aligned, chips stay much easier to review and debug.
+
+## Writing Documentation
+
+Use [documentation.json](documentation.json) as the machine-readable reference for documented chips. This file should be updated whenever a chip is added, renamed, or has a behavior change that affects how people use it.
+
+Each top-level property in [documentation.json](documentation.json) should be the chip's display name.
+
+Recommended structure:
+
+```json
+{
+    "Chip Name": {
+        "usage": "# Chip Name\n\nShort Markdown documentation for the chip."
+    }
+}
+```
+
+### Required Documentation Field
+
+Every documented chip should include this field in [documentation.json](documentation.json):
+
+1. `usage`
+
+### Usage Format
+
+The `usage` value should be written as Markdown inside the JSON string.
+
+Recommended Markdown sections inside `usage`:
+
+1. A title heading with the chip name.
+2. A short summary of what the chip does.
+3. A `## Usage` section.
+4. A `## Rules` section when behavior has important constraints.
+5. A `## Errors` section when the chip can return error tokens.
+6. A `## Example` section with a realistic sample.
+
+### Documentation Rules
+
+1. The chip name key must match the chip header name.
+2. The `usage` value should be Markdown-formatted text.
+3. Documentation should match the current ports and behavior exactly.
+4. Multi-type values should be described as `object` in the explanation text.
+5. If a chip can return error tokens, list them in the Markdown under an `Errors` section.
+6. If a chip has execution-gating behavior, mention it in the Markdown rules or usage notes.
+7. Keep wording user-facing. Document how to use the chip, not how the implementation happens internally unless that behavior affects usage.
+8. Update [documentation.json](documentation.json) in the same change as the chip when behavior changes.
+
+### Adding A New Chip
+
+When adding a new chip to [documentation.json](documentation.json):
+
+1. Add a new top-level object using the chip's display name.
+2. Add a `usage` field containing Markdown text.
+3. Document how to use the chip, any important rules, and any supported error tokens.
+4. Add a realistic example that reflects the actual syntax.
+
+### Documentation Review Checklist
+
+Before finishing documentation changes, verify all of the following:
+
+1. The chip exists as a top-level key in [documentation.json](documentation.json).
+2. The chip name matches the actual chip name.
+3. The `usage` field is valid Markdown text.
+4. The usage text explains setup clearly enough for another person to follow.
+5. Rules, errors, and example usage are included when they matter for the chip.
+6. The content reflects current behavior.
