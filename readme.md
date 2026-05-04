@@ -8,10 +8,11 @@ Every chip should include all of the following:
 
 1. A header comment that declares the chip name.
 2. A complete port list in the header comment.
-3. A `variables:` block.
-4. A `_CHIP_VER` variable.
-5. A `_CURRENT_EXEC` variable.
-6. A trigger function named with the `CHIP_<CHIP_NAME>_TRIGGER` pattern.
+3. A `# Required Libraries` section in the header.
+4. A `variables:` block.
+5. A `_CHIP_VER` variable.
+6. A `_CURRENT_EXEC` variable.
+7. A trigger function named with the `CHIP_<CHIP_NAME>_TRIGGER` pattern.
 
 If one of these pieces is missing, the chip should be treated as incomplete.
 
@@ -25,6 +26,9 @@ Use this order for every chip file:
 #   Input 1 | Type: <type> | Name: <name>
 #   Input 2 | Type: <type> | Name: <name>
 #   Output 1 | Type: <type> | Name: <name>
+
+# Required Libraries
+#   - None
 
 variables:
     _CHIP_VER = <major>.<minor>.<patch>
@@ -88,6 +92,33 @@ Example:
 When a port is documented as `object`, the function parameter and return handling should also treat it as a generic value.
 
 If the header says one thing and the function behaves differently, the header is wrong and must be fixed.
+
+### `# Required Libraries`
+
+Use this section to list any Skript addons the chip depends on.
+
+Rules:
+
+1. Always include the `# Required Libraries` header.
+2. If the chip does not require any addon, write `#   - None`.
+3. If the chip depends on addons such as `skbee` or `skhttp`, list each one on its own line.
+4. Only list libraries that are actually required for the chip to function.
+5. Update this section whenever addon dependencies are added or removed.
+
+Recommended formats:
+
+```sk
+# Required Libraries
+#   - None
+```
+
+```sk
+# Required Libraries
+#   - skbee
+#   - skhttp
+```
+
+This list belongs in the skript itself so dependency requirements are visible immediately when someone opens the chip file.
 
 ## Variables Contract
 
@@ -185,6 +216,72 @@ Use these rules to make chips safer to maintain:
 5. Prefer simple return paths over deeply nested logic when possible.
 6. Do not leave stale comments after changing logic.
 7. If a chip has fallback behavior, document it in comments near the logic.
+8. Keep the `# Required Libraries` list accurate when addon usage changes.
+
+## Supported Skript Libraries
+
+Chip skripts may rely on supported Skript addons when the chip's behavior requires features that base Skript does not provide cleanly. When using an addon, keep the dependency intentional and document behavior clearly enough that another person can tell why the addon is required.
+
+The libraries currently called out by this guide are:
+
+1. `skhttp`
+2. `skbee`
+
+If a chip uses one of these addons, add it to the `# Required Libraries` section in the skript header.
+
+### `skhttp`
+
+Use `skhttp` for HTTP and web-request behavior.
+
+Typical use cases:
+
+1. Sending requests to external APIs.
+2. Fetching remote JSON or text data.
+3. Posting data to web services.
+4. Building chips that depend on external network responses.
+
+Guidelines for `skhttp`:
+
+1. Validate inputs before making a request.
+2. Treat all remote responses as potentially invalid or missing.
+3. Return a documented error token such as `"{error.invalid}"` or `"{error.internal_exception}"` when a request fails or the response cannot be used safely.
+4. Document in the chip's `usage` Markdown when the chip depends on an external service.
+5. Keep request logic narrow and predictable. Do not hide multiple unrelated web calls in one chip unless that behavior is the chip's whole purpose.
+6. If a response can vary in type or structure, document the relevant port as `object`.
+
+Use `skhttp` when the chip's job is clearly network-related. Do not pull it in for logic that can be handled locally inside Skript.
+
+### `skbee`
+
+Use `skbee` for advanced Skript features that extend beyond base syntax, especially when a chip needs richer data handling, NBT access, or addon-provided utility behavior.
+
+Typical use cases:
+
+1. Working with advanced data structures or serialized values.
+2. Accessing NBT or metadata-related features.
+3. Using addon utilities that simplify otherwise awkward Skript logic.
+4. Building chips that need richer interaction with Minecraft-side data.
+
+Guidelines for `skbee`:
+
+1. Use only the parts of `skbee` that directly support the chip's documented purpose.
+2. Keep addon-specific behavior obvious in comments or in the chip documentation if it affects how the chip is used.
+3. If `skbee` data can resolve to multiple shapes or types, document the port as `object`.
+4. Validate data before branching on it or returning it.
+5. If the chip depends on a specific advanced format, describe that requirement in the chip's `usage` Markdown.
+
+Use `skbee` when the chip needs an advanced capability that is genuinely part of the chip contract. Avoid using it just because it is shorter if the result becomes harder to read or maintain.
+
+### Library Rules
+
+When using any Skript addon in a chip:
+
+1. Keep the dependency surface as small as possible.
+2. Document addon-dependent behavior in [documentation.json](documentation.json) inside the chip's Markdown `usage` field.
+3. Return documented error tokens when addon-dependent operations fail.
+4. Do not assume external data is valid.
+5. Do not make the chip's public behavior ambiguous just because the addon allows flexible internals.
+6. Prefer stable, predictable behavior over clever addon-heavy shortcuts.
 
 ## Example
 
@@ -195,6 +292,9 @@ Use these rules to make chips safer to maintain:
 #   Input 2 | Type: bool | Name: Condition
 #   Output 1 | Type: exec | Name: Then
 #   Output 2 | Type: exec | Name: Else
+
+# Required Libraries
+#   - None
 
 variables:
     _CHIP_VER = 1.0.0
@@ -211,10 +311,11 @@ function CHIP_IF_TRIGGER(input2 : bool):
 What this example demonstrates:
 
 1. The header fully documents the chip contract.
-2. The required variables exist.
-3. The trigger function follows the naming convention.
-4. Execution is guarded by `_CURRENT_EXEC`.
-5. The return values map directly to the declared outputs.
+2. The required libraries section exists.
+3. The required variables exist.
+4. The trigger function follows the naming convention.
+5. Execution is guarded by `_CURRENT_EXEC`.
+6. The return values map directly to the declared outputs.
 
 ## Change Checklist
 
@@ -222,14 +323,15 @@ Before considering a chip update finished, verify all of the following:
 
 1. The chip name in the header is still correct.
 2. The port list matches the actual chip definition exactly.
-3. The `variables:` block still exists.
-4. `_CHIP_VER` was updated appropriately.
-5. `_CURRENT_EXEC` is still used correctly for execution gating.
-6. The trigger function name still matches the chip.
-7. Every multi-type port is documented as `object`.
-8. Every return path points to a valid output or a valid error token.
-9. Any expected failure paths use the `{error.<name>}` format.
-10. Comments still describe the current behavior.
+3. The `# Required Libraries` section exists and lists the correct addons or `None`.
+4. The `variables:` block still exists.
+5. `_CHIP_VER` was updated appropriately.
+6. `_CURRENT_EXEC` is still used correctly for execution gating.
+7. The trigger function name still matches the chip.
+8. Every multi-type port is documented as `object`.
+9. Every return path points to a valid output or a valid error token.
+10. Any expected failure paths use the `{error.<name>}` format.
+11. Comments still describe the current behavior.
 
 ## Common Mistakes
 
@@ -240,8 +342,9 @@ Avoid these issues:
 3. Returning the wrong output label for a branch.
 4. Documenting a multi-type port as several concrete types instead of `object`.
 5. Returning an ad-hoc error string instead of the `{error.<name>}` format.
-6. Removing the `variables:` block because the chip looks simple.
-7. Letting the chip name, function name, and behavior drift apart.
+6. Forgetting to add `skbee`, `skhttp`, or another required addon to the `# Required Libraries` list.
+7. Removing the `variables:` block because the chip looks simple.
+8. Letting the chip name, function name, and behavior drift apart.
 
 If you keep the contract, variables, versioning, and execution flow aligned, chips stay much easier to review and debug.
 
